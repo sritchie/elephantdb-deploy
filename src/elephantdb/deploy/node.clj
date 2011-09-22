@@ -35,9 +35,10 @@
                           (m1-large-raid0)
                           (edb/filelimits fd-limit users))
               :configure (phase-fn
-                          (daemontools/daemontools)
-                          (edb/setup)
-                          (edb/deploy))})))
+                          (daemontools/daemontools))
+              :edb-config (phase-fn
+                           (edb/setup)
+                           (edb/deploy))})))
 
 (defnk edb-group-spec [ring user :local? false]
   (group-spec (str "edb-" ring)

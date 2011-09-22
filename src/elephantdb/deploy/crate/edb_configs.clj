@@ -45,12 +45,14 @@
 ;; TODO: Pull this stuff out of local-conf.
 (defn local-conf-with-keys
   [session local-conf]
-  (let [{:keys [edb-s3-keys]} session]
-    (deep-merge-with #(identity %2)
-                     {:hdfs-conf 
-                      {"fs.s3n.awsAccessKeyId" (:identity edb-s3-keys)
-                       "fs.s3n.awsSecretAccessKey" (:credential edb-s3-keys)}}
-                     local-conf)))
+  (let [{:keys [edb-s3-keys]} session
+        {:keys [identity credential]} edb-s3-keys]
+    (if-not (and identity credential)
+      local-conf
+      (deep-merge-with #(identity %2)
+                       {:hdfs-conf {"fs.s3n.awsAccessKeyId" (:identity edb-s3-keys)
+                                    "fs.s3n.awsSecretAccessKey" (:credential edb-s3-keys)}}
+                       local-conf))))
 
 (defn remote-file-local-conf!
   [session dst-path]
