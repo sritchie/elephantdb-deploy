@@ -37,3 +37,5 @@ $ lein run --start --ring <ring name>
 ;; Local -- replace the meta with this:
 
 {:vmfest-Debian-6.0.2.1-64bit-v0.3 {:uuid "/Users/sritchie/.vmfest/models/vmfest-vmfest-Debian-6.0.2.1-64bit-v0.3.vdi", :os-type-id "Debian_64", :sudo-password "vmfest", :no-sudo false, :username "vmfest", :os-family :debian, :os-version "6.0.2.1", :os-64-bit true, :password "vmfest", :description "Debian 6.0.2.1 (64bit) v0.3"}}
+
+Squid conf: https://gist.github.com/1357652

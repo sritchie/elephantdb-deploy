@@ -13,12 +13,29 @@
             [elephantdb.deploy.crate.edb :as edb]
             [elephantdb.deploy.crate.edb-configs :as edb-configs]))
 
+(def vmfest-spec
+  (group-spec
+   "vmfest-node"
+   :phases {:bootstrap (phase-fn
+                        (automated-admin-user/automated-admin-user))}
+   :node-spec {:hardware-id :micro
+               :os-family :debian
+               :os-64-bit true
+               :network-type :local}))
+
+(defnode vmfest-node
+  {:hardware-id :micro
+   :os-family :debian
+   :os-64-bit true
+   :network-type :local}
+  :bootstrap (phase-fn
+              (automated-admin-user/automated-admin-user)))
 
 (defn- edb-node-spec [ring local?]
   (let [{port :port} (edb-configs/read-global-conf! ring)]
     (node-spec
      :image (if local?
-              {:os-family :ubuntu
+              {:os-family :debian
                :os-64-bit true}
               {:image-id "us-east-1/ami-08f40561"
                :hardware-id "m1.large" ;; This must be m1.large for RAID0 to work.

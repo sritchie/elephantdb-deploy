@@ -35,7 +35,7 @@
 ;; TODO: Figure out how to get user into `ips!` and uncomment this in
 ;; `start!`.
 (defn ips! [ring]
-  (let [{:keys [group-name]} (node/edb-group-spec ring)
+  (let [{:keys [group-name]} (node/edb-group-spec ring "elephantdb")
         aws (compute-service-from-map (:deploy-creds (edb-configs/edb-config)))]
     (print-ips-for-tag! aws (name group-name))))
 
@@ -52,12 +52,11 @@
 (defn- converge-edb!
   [ring count local?]
   (let [{:keys [data-creds deploy-creds]} (edb-configs/edb-config)
-        {:keys [user environment auth-groups]
-         :as deploy-creds} (update-in deploy-creds [:user] util/resolve-keypaths)
-
+        {:keys [user environment auth-groups] :as deploy-creds}
+        (update-in deploy-creds [:user] util/resolve-keypaths)
         compute (if local?
                   (service "virtualbox")
-                  (compute-service-from-map deploy-creds))
+                  (compute-service-from-map (dissoc deploy-creds :user :auth-groups)))
         {username :user :as options} (:user deploy-creds)
         user (->> options
                   (apply concat)
@@ -86,6 +85,10 @@
            node-set
            (concat [:phase :edb-config]
                    edb-compute-args))))
+
+(defn converge-vmfest [n]
+  (converge {node/vmfest-node n}
+            :compute (service "virtualbox")))
 
 (defn start! [ring & {local? :local?}]
   (let [{count :node-count} (edb-configs/read-global-conf! ring)]

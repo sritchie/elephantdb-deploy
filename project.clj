@@ -1,5 +1,6 @@
 (defproject elephantdb-deploy "1.0.0-SNAPSHOT"
   :main elephantdb.deploy.provision
+  :resources-path "resources"
   :repositories {"sonatype" "https://oss.sonatype.org/content/repositories/releases"
                  "jclouds-snapshot" "https://oss.sonatype.org/content/repositories/snapshots"}
   :dependencies [[org.clojure/clojure "1.2.1"]
@@ -7,8 +8,9 @@
                  [org.antlr/stringtemplate "3.2"]]
   :dev-dependencies [[swank-clojure "1.4.0-SNAPSHOT"]
                      [clojure-source "1.2.0"]
-                     [org.cloudhoist/pallet "0.6.2"]
-                     ;; [vmfest "0.2.4-SNAPSHOT"]
+                     [org.cloudhoist/pallet "0.6.6"]
+                     [log4j/log4j "1.2.14"]
+                     [vmfest "0.2.4-SNAPSHOT"]
                      ;; [org.cloudhoist/pallet "0.7.1-SNAPSHOT"]
                      [org.cloudhoist/java "0.5.0"]
                      [org.cloudhoist/git "0.5.0"]

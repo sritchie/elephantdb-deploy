@@ -1,4 +1,4 @@
 #!/bin/sh
 
-sh start-elephant.sh $GLOBALCONF$ $TOKEN$
+sh start-elephant.sh $GLOBALCONF$
 
