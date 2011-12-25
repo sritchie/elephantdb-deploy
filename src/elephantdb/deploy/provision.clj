@@ -64,10 +64,11 @@
         node-set (node/edb-group-spec ring user :local? local?)
         edb-compute-args [:compute compute
                           :user user
-                          :environment (merge (:environment deploy-creds)
-                                              {:ring ring
-                                               :blobstore (blobstore-from-map data-creds)
-                                               :edb-s3-keys data-creds})]]
+                          :environment
+                          (merge (:environment deploy-creds)
+                                 {:ring ring
+                                  :blobstore (blobstore-from-map data-creds)
+                                  :edb-s3-keys data-creds})]]
     (apply converge {node-set count} edb-compute-args)
     (when (and (not local?) auth-groups)
       (let [region (my-region)
@@ -80,7 +81,9 @@
                                 sec-group
                                 user-id)
                (catch ResourceNotFoundException _
-                 (log-message (str from-group " doesn't exist, and couldn't be authorized!")))))))
+                 (log-message (str from-group
+                                   " doesn't exist, and couldn't be"
+                                   " authorized!")))))))
     (apply lift
            node-set
            (concat [:phase :edb-config]

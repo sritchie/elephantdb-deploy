@@ -2,7 +2,6 @@
   (:use pallet.thread-expr
         pallet.compute
         pallet.core
-        [clojure.contrib.def :only (defnk)]
         [pallet.blobstore :only (blobstore-from-config)]
         [pallet.phase :only (phase-fn)]
         [elephantdb.deploy.crate.raid0 :only [m1-large-raid0]]
@@ -57,10 +56,7 @@
                            (edb/setup)
                            (edb/deploy))})))
 
-(defnk edb-group-spec [ring user :local? false]
+(defn edb-group-spec [ring user & {:keys [local?]}]
   (group-spec (str "edb-" ring)
               :node-spec (edb-node-spec ring local?)
               :extends [(edb-server-spec user)]))
-
-
-
