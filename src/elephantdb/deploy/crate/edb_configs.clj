@@ -1,31 +1,24 @@
 (ns elephantdb.deploy.crate.edb-configs
   (:use pallet.compute
-        [clojure.string :only (join)]
-        [clojure.contrib.map-utils :only (deep-merge-with)]
         [org.jclouds.blobstore :only (upload-blob)]
-        [pallet.session :only (nodes-in-group)]
-        [pallet.configure :only (pallet-config compute-service-properties)]
         [pallet.resource.remote-file :only (remote-file)])
-  (:require [pallet.request-map :as rm]
+  (:require [elephantdb.deploy.util :as u]
+            [pallet.configure :as conf]
             [pallet.session :as session]))
 
-(defn keywordize [x]
-  (if (keyword? x)
-    x
-    (keyword x)))
-
 (defn edb-config []
-  (compute-service-properties (pallet-config) ["elephantdb"]))
+  (conf/compute-service-properties (conf/pallet-config)
+                                   ["elephantdb"]))
 
 (defn edb-ring-config [ring]
-  (let [ring (keywordize ring)]
+  (let [ring (u/keywordize ring)]
     (-> (edb-config) :configs ring)))
 
-(defn read-global-conf! [ring]
-  (:global (edb-ring-config ring)))
+(def read-global-conf!
+  (comp :global edb-ring-config))
 
-(defn read-local-conf! [ring]
-  (:local (edb-ring-config ring)))
+(def read-local-conf!
+  (comp :local edb-ring-config))
 
 (defn- global-conf-with-hosts
   [session local-config]
@@ -49,10 +42,10 @@
         {:keys [identity credential]} edb-s3-keys]
     (if-not (and identity credential)
       local-conf
-      (deep-merge-with #(identity %2)
-                       {:hdfs-conf {"fs.s3n.awsAccessKeyId" (:identity edb-s3-keys)
-                                    "fs.s3n.awsSecretAccessKey" (:credential edb-s3-keys)}}
-                       local-conf))))
+      (u/deep-merge-with #(identity %2)
+                         {:hdfs-conf {"fs.s3n.awsAccessKeyId" (:identity edb-s3-keys)
+                                      "fs.s3n.awsSecretAccessKey" (:credential edb-s3-keys)}}
+                         local-conf))))
 
 (defn remote-file-local-conf!
   [session dst-path]

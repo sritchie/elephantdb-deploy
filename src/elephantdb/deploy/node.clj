@@ -1,44 +1,18 @@
 (ns elephantdb.deploy.node
-  (:use pallet.thread-expr
-        pallet.compute
-        pallet.core
-        [pallet.blobstore :only (blobstore-from-config)]
+  (:use pallet.core
         [pallet.phase :only (phase-fn)]
-        [elephantdb.deploy.crate.raid0 :only [m1-large-raid0]]
-        [pallet.configure :only (pallet-config compute-service-properties)])
-  (:require [pallet.request-map :as request-map]
-            [pallet.crate.automated-admin-user :as automated-admin-user]
+        [elephantdb.deploy.crate.raid :only [m1-large-raid-0]])
+  (:require [pallet.crate.automated-admin-user :as automated-admin-user]
             [elephantdb.deploy.crate.daemontools :as daemontools]
             [elephantdb.deploy.crate.edb :as edb]
             [elephantdb.deploy.crate.edb-configs :as edb-configs]))
 
-(def vmfest-spec
-  (group-spec
-   "vmfest-node"
-   :phases {:bootstrap (phase-fn
-                        (automated-admin-user/automated-admin-user))}
-   :node-spec {:hardware-id :micro
-               :os-family :debian
-               :os-64-bit true
-               :network-type :local}))
-
-(defnode vmfest-node
-  {:hardware-id :micro
-   :os-family :debian
-   :os-64-bit true
-   :network-type :local}
-  :bootstrap (phase-fn
-              (automated-admin-user/automated-admin-user)))
-
-(defn- edb-node-spec [ring local?]
+(defn edb-node-spec [ring]
   (let [{port :port} (edb-configs/read-global-conf! ring)]
     (node-spec
-     :image (if local?
-              {:os-family :debian
-               :os-64-bit true}
-              {:image-id "us-east-1/ami-08f40561"
-               :hardware-id "m1.large" ;; This must be m1.large for RAID0 to work.
-               :inbound-ports [22 port]}))))
+     :image {:image-id "us-east-1/ami-08f40561"
+             :hardware-id "m1.large"
+             :inbound-ports [22 port]})))
 
 (defn edb-server-spec [admin-user]
   (let [fd-limit "500000"
@@ -48,7 +22,7 @@
                           (automated-admin-user/automated-admin-user
                            (.username admin-user)
                            (.public-key-path admin-user))
-                          (m1-large-raid0)
+                          (m1-large-raid-0)
                           (edb/filelimits fd-limit users))
               :configure (phase-fn
                           (daemontools/daemontools))
@@ -56,7 +30,7 @@
                            (edb/setup)
                            (edb/deploy))})))
 
-(defn edb-group-spec [ring user & {:keys [local?]}]
+(defn edb-group-spec [ring user]
   (group-spec (str "edb-" ring)
-              :node-spec (edb-node-spec ring local?)
+              :node-spec (edb-node-spec ring)
               :extends [(edb-server-spec user)]))

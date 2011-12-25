@@ -1,8 +1,8 @@
 (ns elephantdb.deploy.provision
-  (:use clojure.contrib.command-line
-        pallet.compute
+  (:use pallet.compute
         pallet.core
         pallet.resource
+        clojure.tools.cli
         [pallet.configure :only (pallet-config compute-service-properties)]
         [pallet.blobstore :only (blobstore-from-map)]
         [pallet.utils :only (make-user)]
@@ -11,7 +11,6 @@
         [org.jclouds.compute :only (nodes-with-tag)])
   (:require [elephantdb.deploy.util :as util]
             [elephantdb.deploy.node :as node]
-            [pallet.request-map :as rm]
             [elephantdb.deploy.crate.edb-configs :as edb-configs])
   (:import org.jclouds.rest.ResourceNotFoundException)
   (:gen-class))
@@ -50,18 +49,16 @@
     (compute-service-from-map deploy-creds)))
 
 (defn- converge-edb!
-  [ring count local?]
+  [ring count]
   (let [{:keys [data-creds deploy-creds]} (edb-configs/edb-config)
         {:keys [user environment auth-groups] :as deploy-creds}
         (update-in deploy-creds [:user] util/resolve-keypaths)
-        compute (if local?
-                  (service "virtualbox")
-                  (compute-service-from-map (dissoc deploy-creds :user :auth-groups)))
+        compute (compute-service-from-map (dissoc deploy-creds :user :auth-groups))
         {username :user :as options} (:user deploy-creds)
         user (->> options
                   (apply concat)
                   (apply make-user username))
-        node-set (node/edb-group-spec ring user :local? local?)
+        node-set (node/edb-group-spec ring user)
         edb-compute-args [:compute compute
                           :user user
                           :environment
@@ -70,7 +67,7 @@
                                   :blobstore (blobstore-from-map data-creds)
                                   :edb-s3-keys data-creds})]]
     (apply converge {node-set count} edb-compute-args)
-    (when (and (not local?) auth-groups)
+    (when auth-groups
       (let [region (my-region)
             sec-group (jclouds-group (str "edb-" ring))
             user-id (aws-user-id)]
@@ -89,31 +86,34 @@
            (concat [:phase :edb-config]
                    edb-compute-args))))
 
-(defn converge-vmfest [n]
-  (converge {node/vmfest-node n}
-            :compute (service "virtualbox")))
-
-(defn start! [ring & {local? :local?}]
+(defn start! [ring]
   (let [{count :node-count} (edb-configs/read-global-conf! ring)]
-    (converge-edb! ring count local?)
-    (println "Cluster Started.")
-    #_(ips! ring)))
+    (converge-edb! ring count)
+    (println "Cluster Started.")))
 
-(defn stop! [ring & {local? :local?}]
-  (converge-edb! ring 0 local?)
+(defn stop! [ring]
+  (converge-edb! ring 0)
   (print "Cluster Stopped."))
 
+(defn parse-edb-args [args]
+  (cli args
+       (required ["-r" "--ring" "Name of cluster."])
+       (optional ["--start" "Starts the specified cluster."])
+       (optional ["--stop" "Kills the specified cluster."])
+       (optional ["--ips" "Print the cluster IPs."])))
+
+(defn flip [f]
+  #(apply f (reverse %&)))
+
+(defn just-one? [& xs]
+  (= 1 (filter identity xs)))
+
 (defn -main [& args]
-  (with-command-line args
-    "Provisioning tool for ElephantDB Clusters."
-    [[start? "Start Cluster?"]
-     [stop? "Shutdown Cluster?"]
-     [local? "Local mode?"]
-     [ring "ElephantDB Ring Name"]
-     [ips? "Cluster IPs"]]
-    (if-not ring
-      (println "Please pass in a ring name with --ring.")
-      (cond  start? (start! ring :local? local?)
-             stop? (stop! ring :local? local?)
-             ips? (ips! ring)
-             :else (println "Must pass --start or --stop")))))
+  (let [{:keys [ring start stop ips] :as m} (parse-edb-args args)]
+    (if-not (just-one? start stop ips)
+      (println "Please supply just one of --start, --stop or --ips.")
+      (condp (flip get) m
+        :start (start! ring)
+        :stop  (stop! ring)
+        :ips   (ips! ring)
+        (println "Must pass --start, --stop or --ips.")))))
