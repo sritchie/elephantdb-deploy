@@ -1,7 +1,7 @@
 (ns elephantdb.deploy.crate.edb
-  (:use pallet.thread-expr
-        [clojure.string :only (join)]
-        [elephantdb.deploy.crate.edb-configs :only (remote-file-local-conf! upload-global-conf!)]
+  (:use [clojure.string :only (join)]
+        [elephantdb.deploy.crate.edb-configs
+         :only (remote-file-local-conf! upload-global-conf!)]
         [elephantdb.deploy.crate.leiningen :only (leiningen)]
         [pallet.resource.package :only (package)]
         [pallet.resource.exec-script :only (exec-script)]
@@ -27,27 +27,31 @@
                      (-> session :environment :ring)
                      "/global-conf.clj")})
 
-(defn make-release! []
+(defn make-release!
+  []
   (let [filename "../release.tar.gz"]
     (local-script
      (cd "dist/")
      (rm -f ~filename)
      (tar cvzf ~filename "."))))
 
-(defn- render-template! [template-path context]
+(defn- render-template!
+  [template-path context]
   (let [template (StringTemplate. (slurp template-path))]
     (doseq [[k v] context]
       (.setAttribute template k v))
     (str template)))
 
-(defn render-remote-file! [session rel-path]
+(defn render-remote-file!
+  [session rel-path]
   (let [dst-path (str service-dir rel-path)
         src-path (str local-template-dir rel-path)
         render (render-template! src-path (template-context session))]
     (-> session
         (remote-file dst-path :content render :mode 744))))
 
-(defn filelimits [session fd-limit user-seq]
+(defn filelimits
+  [session fd-limit user-seq]
   (-> session
       (remote-file
        "/etc/security/limits.conf"
@@ -59,6 +63,9 @@
             (join "\n"))
        :no-versioning true
        :overwrite-changes true)))
+
+;; TODO: Note that this is going to stop working fairly soon, based on
+;; the information in https://news.ycombinator.com/item?id=3357623.
 
 (def setup
   (phase-fn
