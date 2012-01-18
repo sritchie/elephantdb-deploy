@@ -27,8 +27,7 @@
                      (-> session :environment :ring)
                      "/global-conf.clj")})
 
-(defn make-release!
-  []
+(defn make-release! []
   (let [filename "../release.tar.gz"]
     (local-script
      (cd "dist/")

@@ -13,4 +13,7 @@
                      [org.cloudhoist/automated-admin-user "0.6.0"]
                      [org.jclouds.provider/aws-ec2 "1.2.1"]
                      [org.jclouds.provider/aws-s3 "1.2.1"]
+                     [org.jclouds/jclouds-blobstore "1.2.1"]
+                     [org.jclouds/jclouds-compute "1.2.1"]
+                     [org.jclouds/jclouds-scriptbuilder "1.2.1"]
                      [org.jclouds.driver/jclouds-jsch "1.2.1"]])

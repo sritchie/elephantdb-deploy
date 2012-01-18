@@ -1,8 +1,11 @@
 (ns elephantdb.deploy.crate.edb-configs
   (:use pallet.compute
+        [clojure.pprint :only (pprint)]
         [org.jclouds.blobstore :only (upload-blob)]
         [pallet.resource.remote-file :only (remote-file)])
   (:require [elephantdb.deploy.util :as u]
+            [clojure.java.io :as io]
+            [clojure.pprint :as pprint]
             [pallet.configure :as conf]
             [pallet.session :as session]))
 
@@ -20,10 +23,13 @@
 (def read-local-conf!
   (comp :local edb-ring-config))
 
+(defn pretty-str [x]
+  (with-out-str (pprint x)))
+
 (defn- global-conf-with-hosts
   [session local-config]
   (let [hosts (map private-ip (session/nodes-in-group session))]
-    (prn-str (assoc local-config :hosts hosts))))
+    (pretty-str (assoc local-config :hosts hosts))))
 
 ;; TODO: Move path out to config staging path in pallet config.
 (defn upload-global-conf!
@@ -52,7 +58,7 @@
   (let [conf-with-keys (->> (-> session :environment :ring)
                             (read-local-conf!)
                             (local-conf-with-keys session)
-                            (prn-str))]
+                            (pretty-str))]
     (remote-file session
                  dst-path
                  :content conf-with-keys)))
