@@ -106,7 +106,7 @@
   #(apply f (reverse %&)))
 
 (defn just-one? [& xs]
-  (= 1 (filter identity xs)))
+  (= 1 (count (filter identity xs))))
 
 (defn -main [& args]
   (let [{:keys [ring start stop ips] :as m} (parse-edb-args args)]
