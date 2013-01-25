@@ -10,7 +10,7 @@
 (defn edb-node-spec [ring]
   (let [{port :port} (edb-configs/read-global-conf! ring)]
     (node-spec
-     :image {:image-id "us-east-1/ami-08f40561"
+     :image {:image-id "us-east-1/ami-d726abbe" ; 64-bit ubuntu on us-east
              :hardware-id "m1.large"
              :inbound-ports [22 port]})))
 

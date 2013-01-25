@@ -1,5 +1,13 @@
 #!/bin/sh
 
-CLASSPATH="$(find lib/ -follow -mindepth 1 -print0 2> /dev/null | tr \\0 \:)"
+CLASSPATH_FILE="$( dirname "$0" )/.classpath"
 
-echo $CLASSPATH
+if [ ! -s $CLASSPATH_FILE ]
+then
+  export LEIN_ROOT=1;
+  lein classpath
+  # Trigger another time for clean output
+  lein classpath > $CLASSPATH_FILE;
+fi
+
+cat $CLASSPATH_FILE

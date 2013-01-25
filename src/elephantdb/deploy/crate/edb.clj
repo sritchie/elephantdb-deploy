@@ -63,12 +63,11 @@
        :no-versioning true
        :overwrite-changes true)))
 
-;; TODO: Note that this is going to stop working fairly soon, based on
-;; the information in https://news.ycombinator.com/item?id=3357623.
+;; TODO If we want to use Oracle's jdk we need to upgrade Pallet to > 0.7.1, see https://github.com/pallet/java-crate
 
 (def setup
   (phase-fn
-   (java :sun :jdk)
+   (java :openjdk :jdk)
    (leiningen)
    (directories service-subdirs :action :create)
    (render-remote-file! "run")
